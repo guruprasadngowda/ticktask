@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Break Time - TickTask</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            /* Dark Mode - Deep Focus */
+            --bg-primary: #0F172A;
+            --bg-secondary: #1E293B;
+            --bg-card: #1E293B;
+            --text-primary: #E5E7EB;
+            --text-secondary: #94A3B8;
+            --accent: #38BDF8;
+            --accent-hover: #0EA5E9;
+            --success: #22C55E;
+            --warning: #FBBF24;
+            --border: #334155;
+        }
+
+        body.light-mode {
+            /* Light Mode - Calm & Focused */
+            --bg-primary: #F7F9FC;
+            --bg-secondary: #FFFFFF;
+            --bg-card: #FFFFFF;
+            --text-primary: #0F172A;
+            --text-secondary: #64748B;
+            --accent: #2563EB;
+            --accent-hover: #1D4ED8;
+            --success: #22C55E;
+            --warning: #F59E0B;
+            --border: #E5E7EB;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.05;
+            background-image: 
+                radial-gradient(circle at 30% 40%, var(--accent) 0%, transparent 50%),
+                radial-gradient(circle at 70% 60%, var(--success) 0%, transparent 50%),
+                radial-gradient(circle at 50% 80%, var(--accent) 0%, transparent 50%);
+            background-size: 100% 100%;
+            pointer-events: none;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 250px;
+            z-index: -1;
+            background: linear-gradient(180deg, var(--accent) 0%, transparent 100%);
+            opacity: 0.03;
+            clip-path: path('M0,0 Q250,50 500,0 T1000,0 Q1250,50 1500,0 T2000,0 L2000,250 Q1750,200 1500,250 T1000,250 Q750,200 500,250 T0,250 Z');
+            pointer-events: none;
+        }
+
+        body.light-mode::before {
+            opacity: 0.08;
+        }
+
+        body.light-mode::after {
+            opacity: 0.05;
+        }
+
+        header {
+            background: var(--bg-secondary);
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .break-timer-badge {
+            background: var(--accent);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 16px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .theme-toggle {
+            background: var(--bg-card);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            color: var(--text-primary);
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.05);
+        }
+
+        .back-btn {
+            background: transparent;
+            border: 2px solid var(--accent);
+            color: var(--accent);
+            padding: 8px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: var(--accent);
+            color: white;
+        }
+
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+
+        .break-header {
+            text-align: center;
+            margin-bottom: 40px;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .break-title {
+            font-size: 48px;
+            color: var(--accent);
+            margin-bottom: 20px;
+        }
+
+        .advice-box {
+            background: linear-gradient(135deg, var(--bg-secondary), var(--bg-card));
+            padding: 25px 35px;
+            border-radius: 15px;
+            max-width: 600px;
+            margin: 0 auto;
+            border: 2px solid var(--accent);
+            box-shadow: 0 8px 20px rgba(233, 69, 96, 0.2);
+        }
+
+        .advice-box h3 {
+            color: var(--accent);
+            margin-bottom: 15px;
+            font-size: 22px;
+        }
+
+        .advice-box p {
+            color: var(--text-primary);
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        .advice-box p:last-child {
+            margin-bottom: 0;
+        }
+
+        .game-container {
+            background: var(--bg-secondary);
+            padding: 50px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            max-width: 600px;
+            width: 100%;
+            animation: slideUp 0.5s ease;
+            border: 1px solid var(--border);
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .game-tabs {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            justify-content: center;
+        }
+
+        .tab-btn {
+            padding: 12px 30px;
+            border: 2px solid var(--border);
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .tab-btn.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: white;
+        }
+
+        .tab-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .game-content {
+            display: none;
+        }
+
+        .game-content.active {
+            display: block;
+        }
+
+        /* Tic-Tac-Toe */
+        .tictactoe-board {
+            display: grid;
+            grid-template-columns: repeat(3, 120px);
+            gap: 15px;
+            margin: 30px auto;
+            justify-content: center;
+        }
+
+        .tictactoe-cell {
+            width: 120px;
+            height: 120px;
+            background: var(--bg-card);
+            border: none;
+            border-radius: 15px;
+            font-size: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: var(--text-primary);
+            font-weight: bold;
+        }
+
+        .tictactoe-cell:hover:not(:disabled) {
+            background: var(--accent);
+            transform: scale(1.05);
+        }
+
+        .tictactoe-cell:disabled {
+            cursor: not-allowed;
+        }
+
+        .game-status {
+            text-align: center;
+            font-size: 20px;
+            margin-top: 20px;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        .restart-btn {
+            display: block;
+            margin: 20px auto 0;
+            padding: 12px 30px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .restart-btn:hover {
+            background: var(--accent-hover);
+            transform: translateY(-2px);
+        }
+
+        /* Memory Game */
+        .memory-board {
+            display: grid;
+            grid-template-columns: repeat(4, 100px);
+            gap: 15px;
+            margin: 30px auto;
+            justify-content: center;
+        }
+
+        .memory-card {
+            width: 100px;
+            height: 100px;
+            background: var(--bg-card);
+            border: none;
+            border-radius: 15px;
+            font-size: 40px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: var(--text-primary);
+        }
+
+        .memory-card:hover:not(.flipped):not(.matched) {
+            transform: scale(1.05);
+            background: var(--accent);
+        }
+
+        .memory-card.flipped,
+        .memory-card.matched {
+            background: var(--success);
+            cursor: default;
+        }
+
+        .memory-card.matched {
+            opacity: 0.6;
+        }
+
+        /* Snake Game */
+        .snake-container {
+            text-align: center;
+        }
+
+        #snakeCanvas {
+            border: 3px solid var(--accent);
+            border-radius: 10px;
+            background: var(--bg-card);
+            margin: 20px auto;
+            display: block;
+        }
+
+        .snake-score {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--accent);
+        }
+
+        .snake-controls {
+            display: grid;
+            grid-template-columns: repeat(3, 60px);
+            gap: 10px;
+            margin: 20px auto;
+            justify-content: center;
+        }
+
+        .control-btn {
+            width: 60px;
+            height: 60px;
+            background: var(--bg-card);
+            border: 2px solid var(--accent);
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 24px;
+            color: var(--accent);
+            transition: all 0.3s ease;
+        }
+
+        .control-btn:hover {
+            background: var(--accent);
+            color: white;
+        }
+
+        .control-btn:active {
+            transform: scale(0.95);
+        }
+
+        @media (max-width: 768px) {
+            .break-title {
+                font-size: 36px;
+            }
+
+            .timer-display {
+                font-size: 48px;
+            }
+
+            .game-container {
+                padding: 30px 20px;
+            }
+
+            .tictactoe-board {
+                grid-template-columns: repeat(3, 90px);
+                gap: 10px;
+            }
+
+            .tictactoe-cell {
+                width: 90px;
+                height: 90px;
+                font-size: 40px;
+            }
+
+            .memory-board {
+                grid-template-columns: repeat(4, 70px);
+                gap: 10px;
+            }
+
+            .memory-card {
+                width: 70px;
+                height: 70px;
+                font-size: 30px;
+            }
+
+            #snakeCanvas {
+                width: 280px;
+                height: 280px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">⏱️ TickTask</div>
+        <div class="header-controls">
+            <div class="break-timer-badge" id="breakTimerBadge">
+                ⏱️ <span id="headerTimer">5:00</span>
+            </div>
+            <button class="theme-toggle" id="themeToggle">🌙 Dark Mode</button>
+            <a href="index.html" class="back-btn" id="skipBreak">Skip Break</a>
+        </div>
+    </header>
+
+    <main>
+        <div class="break-header">
+            <h1 class="break-title" id="breakTitle">🎉 Break Time!</h1>
+            <div class="advice-box">
+                <h3>💡 Health Tip</h3>
+                <p>Take a moment to stretch, walk around, or do some light exercises.</p>
+                <p>Give your eyes a rest from the screen and stay hydrated! 💧</p>
+            </div>
+        </div>
+
+        <div class="game-container">
+            <h2 style="text-align: center; margin-bottom: 20px; color: var(--accent);">Choose Your Game</h2>
+            <div class="game-tabs">
+                <button class="tab-btn active" data-game="flappy">Flappy Bird</button>
+                <button class="tab-btn" data-game="snake">Snake</button>
+                <button class="tab-btn" data-game="tictactoe">Tic-Tac-Toe</button>
+            </div>
+
+            <!-- Flappy Bird -->
+            <div class="game-content active" id="flappy">
+                <div class="snake-container">
+                    <div class="snake-score">Score: <span id="flappyScore">0</span></div>
+                    <canvas id="flappyCanvas" width="400" height="600"></canvas>
+                    <button class="restart-btn" id="restartFlappy">New Game</button>
+                    <p style="text-align: center; color: var(--text-secondary); margin-top: 15px;">
+                        Press SPACE or Click to Fly
+                    </p>
+                </div>
+            </div>
+
+            <!-- Tic-Tac-Toe -->
+            <div class="game-content" id="tictactoe">
+                <div class="tictactoe-board" id="tictactoeBoard">
+                    <button class="tictactoe-cell" data-index="0"></button>
+                    <button class="tictactoe-cell" data-index="1"></button>
+                    <button class="tictactoe-cell" data-index="2"></button>
+                    <button class="tictactoe-cell" data-index="3"></button>
+                    <button class="tictactoe-cell" data-index="4"></button>
+                    <button class="tictactoe-cell" data-index="5"></button>
+                    <button class="tictactoe-cell" data-index="6"></button>
+                    <button class="tictactoe-cell" data-index="7"></button>
+                    <button class="tictactoe-cell" data-index="8"></button>
+                </div>
+                <div class="game-status" id="tictactoeStatus">Your turn (X)</div>
+                <button class="restart-btn" id="restartTictactoe">New Game</button>
+            </div>
+
+            <!-- Snake Game -->
+            <div class="game-content" id="snake">
+                <div class="snake-score">Score: <span id="snakeScore">0</span></div>
+                <canvas id="snakeCanvas" width="400" height="400"></canvas>
+                <div class="snake-controls">
+                    <div></div>
+                    <button class="control-btn" id="upBtn">↑</button>
+                    <div></div>
+                    <button class="control-btn" id="leftBtn">←</button>
+                    <button class="control-btn" id="downBtn">↓</button>
+                    <button class="control-btn" id="rightBtn">→</button>
+                </div>
+                <button class="restart-btn" id="restartSnake">New Game</button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Check authentication
+        const token = localStorage.getItem('token');
+        if (!token) {
+            window.location.href = 'index.html';
+        }
+
+        // Break timer
+        const breakType = localStorage.getItem('breakType') || 'short';
+        const breakDuration = parseInt(localStorage.getItem('breakDuration') || '5');
+        let breakTimeRemaining = breakDuration * 60;
+        let breakInterval = null;
+
+        const breakTimerEl = document.getElementById('breakTimer');
+        const headerTimerEl = document.getElementById('headerTimer');
+        const breakTitleEl = document.getElementById('breakTitle');
+
+        if (breakType === 'long') {
+            breakTitleEl.textContent = '🎉 Long Break Time!';
+        }
+
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function updateBreakTimer() {
+            const formatted = formatTime(breakTimeRemaining);
+            headerTimerEl.textContent = formatted;
+        }
+
+        function startBreakTimer() {
+            breakInterval = setInterval(() => {
+                breakTimeRemaining--;
+                updateBreakTimer();
+                
+                if (breakTimeRemaining <= 0) {
+                    clearInterval(breakInterval);
+                    localStorage.removeItem('breakType');
+                    localStorage.removeItem('breakDuration');
+                    window.location.href = 'index.html';
+                }
+            }, 1000);
+        }
+
+        updateBreakTimer();
+        startBreakTimer();
+
+        // Theme toggle
+        const themeToggle = document.getElementById('themeToggle');
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'light') {
+            document.body.classList.add('light-mode');
+            themeToggle.textContent = '☀️ Light Mode';
+        }
+
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('light-mode');
+            if (document.body.classList.contains('light-mode')) {
+                themeToggle.textContent = '☀️ Light Mode';
+                localStorage.setItem('theme', 'light');
+            } else {
+                themeToggle.textContent = '🌙 Dark Mode';
+                localStorage.setItem('theme', 'dark');
+            }
+        });
+
+        // Skip break
+        document.getElementById('skipBreak').addEventListener('click', () => {
+            clearInterval(breakInterval);
+            localStorage.removeItem('breakType');
+            localStorage.removeItem('breakDuration');
+        });
+
+        // Game tabs
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        const gameContents = document.querySelectorAll('.game-content');
+
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                tabBtns.forEach(b => b.classList.remove('active'));
+                gameContents.forEach(c => c.classList.remove('active'));
+                
+                btn.classList.add('active');
+                const game = btn.dataset.game;
+                document.getElementById(game).classList.add('active');
+            });
+        });
+
+        // === TIC-TAC-TOE ===
+        let tttBoard = ['', '', '', '', '', '', '', '', ''];
+        let tttPlayer = 'X';
+        let tttActive = true;
+
+        const tttCells = document.querySelectorAll('.tictactoe-cell');
+        const tttStatus = document.getElementById('tictactoeStatus');
+        const restartTtt = document.getElementById('restartTictactoe');
+
+        const winConditions = [
+            [0, 1, 2], [3, 4, 5], [6, 7, 8],
+            [0, 3, 6], [1, 4, 7], [2, 5, 8],
+            [0, 4, 8], [2, 4, 6]
+        ];
+
+        function handleTttClick(e) {
+            const idx = e.target.dataset.index;
+            if (tttBoard[idx] || !tttActive) return;
+            
+            tttBoard[idx] = tttPlayer;
+            e.target.textContent = tttPlayer;
+            
+            if (checkTttWin()) {
+                tttStatus.textContent = `${tttPlayer} wins! 🎉`;
+                tttActive = false;
+                return;
+            }
+            
+            if (tttBoard.every(c => c)) {
+                tttStatus.textContent = "It's a draw! 🤝";
+                tttActive = false;
+                return;
+            }
+            
+            tttPlayer = tttPlayer === 'X' ? 'O' : 'X';
+            tttStatus.textContent = `${tttPlayer}'s turn`;
+        }
+
+        function checkTttWin() {
+            return winConditions.some(condition => {
+                return condition.every(idx => tttBoard[idx] === tttPlayer);
+            });
+        }
+
+        function resetTtt() {
+            tttBoard = ['', '', '', '', '', '', '', '', ''];
+            tttPlayer = 'X';
+            tttActive = true;
+            tttStatus.textContent = "Your turn (X)";
+            tttCells.forEach(cell => cell.textContent = '');
+        }
+
+        tttCells.forEach(cell => cell.addEventListener('click', handleTttClick));
+        restartTtt.addEventListener('click', resetTtt);
+
+        // === FLAPPY BIRD ===
+        const flappyCanvas = document.getElementById('flappyCanvas');
+        const flappyCtx = flappyCanvas.getContext('2d');
+        const restartFlappy = document.getElementById('restartFlappy');
+        const flappyScoreEl = document.getElementById('flappyScore');
+
+        let bird = { x: 80, y: 250, velocity: 0, radius: 15 };
+        let pipes = [];
+        let flappyScore = 0;
+        let flappyGameOver = false;
+        let flappyInterval = null;
+        let pipeGap = 180;
+        let gravity = 0.5;
+        let jumpStrength = -8;
+
+        function drawFlappyBird() {
+            // Clear canvas
+            flappyCtx.fillStyle = '#87CEEB';
+            flappyCtx.fillRect(0, 0, flappyCanvas.width, flappyCanvas.height);
+
+            // Draw bird
+            flappyCtx.fillStyle = '#FFD700';
+            flappyCtx.beginPath();
+            flappyCtx.arc(bird.x, bird.y, bird.radius, 0, Math.PI * 2);
+            flappyCtx.fill();
+            
+            // Draw eye
+            flappyCtx.fillStyle = '#000';
+            flappyCtx.beginPath();
+            flappyCtx.arc(bird.x + 5, bird.y - 3, 3, 0, Math.PI * 2);
+            flappyCtx.fill();
+
+            // Draw pipes
+            flappyCtx.fillStyle = '#2ecc71';
+            pipes.forEach(pipe => {
+                flappyCtx.fillRect(pipe.x, 0, pipe.width, pipe.topHeight);
+                flappyCtx.fillRect(pipe.x, pipe.topHeight + pipeGap, pipe.width, flappyCanvas.height);
+            });
+
+            // Draw score
+            flappyCtx.fillStyle = '#fff';
+            flappyCtx.font = 'bold 30px Arial';
+            flappyCtx.fillText(flappyScore, flappyCanvas.width / 2 - 15, 50);
+        }
+
+        function updateFlappyBird() {
+            if (flappyGameOver) return;
+
+            // Update bird
+            bird.velocity += gravity;
+            bird.y += bird.velocity;
+
+            // Check ground/ceiling collision
+            if (bird.y + bird.radius > flappyCanvas.height || bird.y - bird.radius < 0) {
+                endFlappyGame();
+                return;
+            }
+
+            // Update pipes
+            pipes.forEach((pipe, index) => {
+                pipe.x -= 3;
+
+                // Check collision
+                if (bird.x + bird.radius > pipe.x && bird.x - bird.radius < pipe.x + pipe.width) {
+                    if (bird.y - bird.radius < pipe.topHeight || 
+                        bird.y + bird.radius > pipe.topHeight + pipeGap) {
+                        endFlappyGame();
+                        return;
+                    }
+                }
+
+                // Score point
+                if (pipe.x + pipe.width < bird.x && !pipe.scored) {
+                    flappyScore++;
+                    flappyScoreEl.textContent = flappyScore;
+                    pipe.scored = true;
+                }
+
+                // Remove off-screen pipes
+                if (pipe.x + pipe.width < 0) {
+                    pipes.splice(index, 1);
+                }
+            });
+
+            // Add new pipes
+            if (pipes.length === 0 || pipes[pipes.length - 1].x < flappyCanvas.width - 250) {
+                const topHeight = Math.random() * (flappyCanvas.height - pipeGap - 100) + 50;
+                pipes.push({
+                    x: flappyCanvas.width,
+                    width: 60,
+                    topHeight: topHeight,
+                    scored: false
+                });
+            }
+
+            drawFlappyBird();
+        }
+
+        function flappyJump() {
+            if (!flappyGameOver) {
+                bird.velocity = jumpStrength;
+            } else {
+                resetFlappyBird();
+            }
+        }
+
+        function endFlappyGame() {
+            flappyGameOver = true;
+            if (flappyInterval) clearInterval(flappyInterval);
+            
+            flappyCtx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            flappyCtx.fillRect(0, flappyCanvas.height / 2 - 60, flappyCanvas.width, 120);
+            flappyCtx.fillStyle = '#fff';
+            flappyCtx.font = 'bold 40px Arial';
+            flappyCtx.textAlign = 'center';
+            flappyCtx.fillText('Game Over!', flappyCanvas.width / 2, flappyCanvas.height / 2);
+            flappyCtx.font = '20px Arial';
+            flappyCtx.fillText(`Score: ${flappyScore}`, flappyCanvas.width / 2, flappyCanvas.height / 2 + 40);
+            flappyCtx.textAlign = 'left';
+        }
+
+        function resetFlappyBird() {
+            bird = { x: 80, y: 250, velocity: 0, radius: 15 };
+            pipes = [];
+            flappyScore = 0;
+            flappyScoreEl.textContent = flappyScore;
+            flappyGameOver = false;
+            
+            if (flappyInterval) clearInterval(flappyInterval);
+            flappyInterval = setInterval(updateFlappyBird, 1000 / 60);
+            drawFlappyBird();
+        }
+
+        flappyCanvas.addEventListener('click', flappyJump);
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space' && document.getElementById('flappy').classList.contains('active')) {
+                e.preventDefault();
+                flappyJump();
+            }
+        });
+        restartFlappy.addEventListener('click', resetFlappyBird);
+
+        // Start flappy bird on load
+        resetFlappyBird();
+
+        // === MEMORY GAME - REMOVED ===
+
+        // === SNAKE GAME ===
+        const canvas = document.getElementById('snakeCanvas');
+        const ctx = canvas.getContext('2d');
+        const gridSize = 20;
+        const tileCount = canvas.width / gridSize;
+
+        let snake = [{x: 10, y: 10}];
+        let food = {x: 15, y: 15};
+        let dx = 0;
+        let dy = 0;
+        let score = 0;
+        let snakeInterval = null;
+
+        const snakeScoreEl = document.getElementById('snakeScore');
+        const restartSnake = document.getElementById('restartSnake');
+
+        function drawSnake() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw snake
+            ctx.fillStyle = '#e94560';
+            snake.forEach(segment => {
+                ctx.fillRect(segment.x * gridSize, segment.y * gridSize, gridSize - 2, gridSize - 2);
+            });
+            
+            // Draw food
+            ctx.fillStyle = '#2ecc71';
+            ctx.fillRect(food.x * gridSize, food.y * gridSize, gridSize - 2, gridSize - 2);
+        }
+
+        function moveSnake() {
+            const head = {x: snake[0].x + dx, y: snake[0].y + dy};
+            
+            // Check wall collision
+            if (head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount) {
+                resetSnake();
+                return;
+            }
+            
+            // Check self collision
+            if (snake.some(segment => segment.x === head.x && segment.y === head.y)) {
+                resetSnake();
+                return;
+            }
+            
+            snake.unshift(head);
+            
+            // Check food
+            if (head.x === food.x && head.y === food.y) {
+                score++;
+                snakeScoreEl.textContent = score;
+                placeFood();
+            } else {
+                snake.pop();
+            }
+            
+            drawSnake();
+        }
+
+        function placeFood() {
+            food = {
+                x: Math.floor(Math.random() * tileCount),
+                y: Math.floor(Math.random() * tileCount)
+            };
+        }
+
+        function startSnake() {
+            if (snakeInterval) clearInterval(snakeInterval);
+            snakeInterval = setInterval(moveSnake, 150);
+        }
+
+        function resetSnake() {
+            if (snakeInterval) clearInterval(snakeInterval);
+            snake = [{x: 10, y: 10}];
+            dx = 0;
+            dy = 0;
+            score = 0;
+            snakeScoreEl.textContent = score;
+            placeFood();
+            drawSnake();
+        }
+
+        function changeDirection(newDx, newDy) {
+            if ((dx === 0 || newDx === 0) && (dy === 0 || newDy === 0)) {
+                dx = newDx;
+                dy = newDy;
+                if (!snakeInterval) startSnake();
+            }
+        }
+
+        // Controls
+        document.getElementById('upBtn').addEventListener('click', () => changeDirection(0, -1));
+        document.getElementById('downBtn').addEventListener('click', () => changeDirection(0, 1));
+        document.getElementById('leftBtn').addEventListener('click', () => changeDirection(-1, 0));
+        document.getElementById('rightBtn').addEventListener('click', () => changeDirection(1, 0));
+
+        document.addEventListener('keydown', (e) => {
+            switch(e.key) {
+                case 'ArrowUp': changeDirection(0, -1); break;
+                case 'ArrowDown': changeDirection(0, 1); break;
+                case 'ArrowLeft': changeDirection(-1, 0); break;
+                case 'ArrowRight': changeDirection(1, 0); break;
+            }
+        });
+
+        restartSnake.addEventListener('click', resetSnake);
+        drawSnake();
+    </script>
+</body>
+</html>

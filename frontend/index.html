@@ -1,0 +1,1553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TickTask - Focus & Productivity</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            /* Dark Mode - Deep Focus */
+            --bg-primary: #0F172A;
+            --bg-secondary: #1E293B;
+            --bg-card: #1E293B;
+            --text-primary: #E5E7EB;
+            --text-secondary: #94A3B8;
+            --accent: #38BDF8;
+            --accent-hover: #0EA5E9;
+            --success: #22C55E;
+            --warning: #FBBF24;
+            --border: #334155;
+        }
+
+        body.light-mode {
+            /* Light Mode - Calm & Focused */
+            --bg-primary: #F7F9FC;
+            --bg-secondary: #FFFFFF;
+            --bg-card: #FFFFFF;
+            --text-primary: #0F172A;
+            --text-secondary: #64748B;
+            --accent: #2563EB;
+            --accent-hover: #1D4ED8;
+            --success: #22C55E;
+            --warning: #F59E0B;
+            --border: #E5E7EB;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.05;
+            background-image: 
+                radial-gradient(circle at 20% 50%, var(--accent) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, var(--accent) 0%, transparent 50%),
+                radial-gradient(circle at 40% 20%, var(--success) 0%, transparent 50%);
+            background-size: 100% 100%;
+            pointer-events: none;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 300px;
+            z-index: -1;
+            background: linear-gradient(180deg, transparent 0%, var(--accent) 100%);
+            opacity: 0.03;
+            clip-path: path('M0,100 Q250,50 500,100 T1000,100 Q1250,150 1500,100 T2000,100 L2000,300 L0,300 Z');
+            pointer-events: none;
+        }
+
+        body.light-mode::before {
+            opacity: 0.08;
+        }
+
+        body.light-mode::after {
+            opacity: 0.05;
+        }
+
+        /* Auth Overlay */
+        .auth-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-primary);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .auth-overlay::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.06;
+            background-image: 
+                radial-gradient(circle at 10% 20%, var(--accent) 0%, transparent 50%),
+                radial-gradient(circle at 90% 70%, var(--accent) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, var(--success) 0%, transparent 60%);
+            background-size: 100% 100%;
+        }
+
+        .auth-overlay::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -10%;
+            width: 120%;
+            height: 120%;
+            z-index: -1;
+            background: 
+                repeating-linear-gradient(
+                    45deg,
+                    transparent,
+                    transparent 100px,
+                    var(--accent) 100px,
+                    var(--accent) 102px
+                );
+            opacity: 0.02;
+            transform: rotate(-15deg);
+        }
+
+        .auth-overlay.hidden {
+            display: none;
+        }
+
+        body.light-mode .auth-overlay::before {
+            opacity: 0.1;
+        }
+
+        body.light-mode .auth-overlay::after {
+            opacity: 0.03;
+        }
+
+        .auth-header {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+
+        .auth-theme-toggle {
+            background: var(--bg-card);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            color: var(--text-primary);
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .auth-theme-toggle:hover {
+            transform: scale(1.05);
+        }
+
+        .auth-container {
+            background: var(--bg-secondary);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            width: 90%;
+            max-width: 420px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .auth-container h2 {
+            margin-bottom: 30px;
+            font-size: 28px;
+            text-align: center;
+            color: var(--accent);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 16px;
+            transition: border 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-hover);
+            transform: translateY(-2px);
+        }
+
+        .auth-switch {
+            text-align: center;
+            margin-top: 20px;
+            color: var(--text-secondary);
+        }
+
+        .auth-switch a {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .error-message {
+            background: rgba(231, 76, 60, 0.1);
+            color: #e74c3c;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        /* Main App */
+        .app-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .app-container.hidden {
+            display: none;
+        }
+
+        /* Header */
+        header {
+            background: var(--bg-secondary);
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .theme-toggle {
+            background: var(--bg-card);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            color: var(--text-primary);
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.05);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .username {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .logout-btn {
+            background: transparent;
+            border: 2px solid var(--accent);
+            color: var(--accent);
+            padding: 8px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            background: var(--accent);
+            color: white;
+        }
+
+        /* Main Content */
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+            width: 100%;
+        }
+
+        .stats-bar {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .stat-card {
+            background: var(--bg-secondary);
+            padding: 20px 30px;
+            border-radius: 12px;
+            text-align: center;
+            min-width: 150px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--border);
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        /* Timer Section */
+        .timer-container {
+            background: var(--bg-secondary);
+            padding: 60px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            max-width: 500px;
+            width: 100%;
+            border: 1px solid var(--border);
+        }
+
+        .mode-indicator {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 30px;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .timer-display {
+            font-size: 80px;
+            font-weight: 700;
+            margin-bottom: 40px;
+            font-family: 'Courier New', monospace;
+            color: var(--text-primary);
+        }
+
+        .timer-controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        .control-btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .control-btn.start {
+            background: var(--success);
+            color: white;
+        }
+
+        .control-btn.pause {
+            background: var(--warning);
+            color: white;
+        }
+
+        .control-btn.reset {
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border: 2px solid var(--border);
+        }
+
+        .control-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .control-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Todo Section */
+        .todo-section {
+            width: 100%;
+            max-width: 900px;
+            margin: 40px auto 60px auto;
+            padding: 0 20px;
+            display: block !important;
+            visibility: visible !important;
+        }
+
+        .todo-container {
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--border);
+            display: block !important;
+        }
+
+        .todo-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .todo-header h2 {
+            font-size: 24px;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .add-task-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .add-task-btn:hover {
+            background: var(--accent-hover);
+            transform: translateY(-2px);
+        }
+
+        .task-input-container {
+            margin-bottom: 20px;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .task-input-container.hidden {
+            display: none;
+        }
+
+        .task-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 16px;
+            margin-bottom: 10px;
+            transition: border 0.3s ease;
+        }
+
+        .task-input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .task-input-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-save, .btn-cancel {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-save {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-save:hover {
+            background: #16a34a;
+        }
+
+        .btn-cancel {
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border: 2px solid var(--border);
+        }
+
+        .btn-cancel:hover {
+            background: var(--bg-primary);
+        }
+
+        .task-filters {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            border: 2px solid var(--border);
+            background: var(--bg-card);
+            color: var(--text-secondary);
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .filter-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .filter-btn.active {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+
+        .tasks-list {
+            min-height: 200px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+            font-size: 16px;
+        }
+
+        .task-item {
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: all 0.3s ease;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .task-item:hover {
+            border-color: var(--accent);
+            transform: translateX(5px);
+        }
+
+        .task-status {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .task-status.not-started {
+            background: var(--text-secondary);
+        }
+
+        .task-status.in-progress {
+            background: var(--warning);
+        }
+
+        .task-status.completed {
+            background: var(--success);
+        }
+
+        .task-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .task-title {
+            font-size: 16px;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .task-item.completed .task-title {
+            text-decoration: line-through;
+            opacity: 0.6;
+        }
+
+        .task-status-select {
+            padding: 4px 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 12px;
+            cursor: pointer;
+            transition: border 0.3s ease;
+        }
+
+        .task-status-select:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .task-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .task-delete-btn {
+            background: transparent;
+            border: none;
+            color: #ef4444;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+
+        .task-delete-btn:hover {
+            background: rgba(239, 68, 68, 0.1);
+            transform: scale(1.1);
+        }
+
+        /* Settings */
+        .settings-container {
+            margin-top: 30px;
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .setting-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .setting-group label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+        }
+
+        .setting-group input {
+            width: 80px;
+            padding: 8px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .setting-group input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        /* Game Section */
+        .game-container {
+            background: var(--bg-secondary);
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            max-width: 500px;
+            width: 100%;
+        }
+
+        .game-container.hidden {
+            display: none;
+        }
+
+        .game-container h2 {
+            color: var(--accent);
+            margin-bottom: 20px;
+        }
+
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            gap: 10px;
+            margin: 30px auto;
+            justify-content: center;
+        }
+
+        .game-cell {
+            width: 100px;
+            height: 100px;
+            background: var(--bg-card);
+            border: none;
+            border-radius: 10px;
+            font-size: 40px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: var(--text-primary);
+        }
+
+        .game-cell:hover:not(:disabled) {
+            background: var(--accent);
+            transform: scale(1.05);
+        }
+
+        .game-cell:disabled {
+            cursor: not-allowed;
+        }
+
+        .game-status {
+            font-size: 18px;
+            margin-top: 20px;
+            color: var(--text-secondary);
+        }
+
+        .restart-game-btn {
+            margin-top: 20px;
+            padding: 12px 30px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            header {
+                padding: 15px 20px;
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .timer-display {
+                font-size: 60px;
+            }
+
+            .timer-container {
+                padding: 40px 20px;
+            }
+
+            .game-board {
+                grid-template-columns: repeat(3, 80px);
+            }
+
+            .game-cell {
+                width: 80px;
+                height: 80px;
+                font-size: 32px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Auth Overlay -->
+    <div id="authOverlay" class="auth-overlay">
+        <div class="auth-header">
+            <button class="auth-theme-toggle" id="authThemeToggle">🌙 Dark Mode</button>
+        </div>
+        
+        <div class="auth-container">
+            <h2 id="authTitle">Login to TickTask</h2>
+            <div id="authError" class="error-message hidden"></div>
+            
+            <!-- Login Form -->
+            <form id="loginForm">
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="loginEmail" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="loginPassword" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Login</button>
+                
+                <div class="auth-switch">
+                    <span>Don't have an account?</span>
+                    <a id="showRegister">Register</a>
+                </div>
+            </form>
+
+            <!-- Register Form -->
+            <form id="registerForm" style="display: none;">
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="registerUsername" required>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="registerEmail" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="registerPassword" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Register</button>
+                
+                <div class="auth-switch">
+                    <span>Already have an account?</span>
+                    <a id="showLogin">Login</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="appContainer" class="app-container hidden">
+        <header>
+            <div class="logo">⏱️ TickTask</div>
+            <div class="header-controls">
+                <button class="theme-toggle" id="themeToggle">🌙 Dark Mode</button>
+                <div class="user-info">
+                    <span class="username" id="username">User</span>
+                    <button class="logout-btn" id="logoutBtn">Logout</button>
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <div class="stats-bar">
+                <div class="stat-card">
+                    <div class="stat-value" id="totalMinutes">0</div>
+                    <div class="stat-label">Total Minutes</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="totalSessions">0</div>
+                    <div class="stat-label">Sessions Completed</div>
+                </div>
+            </div>
+
+            <!-- Timer Container -->
+            <div id="timerContainer" class="timer-container">
+                <div class="mode-indicator" id="modeIndicator">Focus Time</div>
+                <div class="timer-display" id="timerDisplay">25:00</div>
+                
+                <div class="timer-controls">
+                    <button class="control-btn start" id="startBtn">Start</button>
+                    <button class="control-btn pause hidden" id="pauseBtn">Pause</button>
+                    <button class="control-btn reset" id="resetBtn">Reset</button>
+                </div>
+
+                <div class="settings-container">
+                    <div class="setting-group">
+                        <label>Focus (min)</label>
+                        <input type="number" id="focusTime" value="25" min="1" max="60">
+                    </div>
+                    <div class="setting-group">
+                        <label>Short Break (min)</label>
+                        <input type="number" id="shortBreak" value="5" min="1" max="30">
+                    </div>
+                    <div class="setting-group">
+                        <label>Long Break (min)</label>
+                        <input type="number" id="longBreak" value="15" min="1" max="60">
+                    </div>
+                </div>
+            </div>
+            <!-- Todo Section -->
+<div id="todoSection" class="todo-section">
+  <div class="todo-container">
+    <div class="todo-header">
+      <h2>Tasks</h2>
+      <button class="add-task-btn" id="addTaskBtn">+ Add Task</button>
+    </div>
+    <div id="taskInputContainer" class="task-input-container hidden">
+      <input type="text" id="taskInput" class="task-input" placeholder="Enter task...">
+      <div class="task-input-actions">
+        <button class="btn-save" id="saveTaskBtn">Save</button>
+        <button class="btn-cancel" id="cancelTaskBtn">Cancel</button>
+      </div>
+    </div>
+    <div class="task-filters">
+      <button class="filter-btn active" data-filter="all">All</button>
+      <button class="filter-btn" data-filter="not-started">Not Started</button>
+      <button class="filter-btn" data-filter="in-progress">In Progress</button>
+      <button class="filter-btn" data-filter="completed">Completed</button>
+    </div>
+    <div id="tasksList" class="tasks-list"></div>
+  </div>
+</div>
+
+        </main>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:5000/api';
+        
+        // State
+        let currentUser = null;
+        let timerInterval = null;
+        let timeRemaining = 25 * 60;
+        let currentMode = 'focus';
+        let cycleCount = 0;
+        let isRunning = false;
+
+        // DOM Elements
+        const authOverlay = document.getElementById('authOverlay');
+        const appContainer = document.getElementById('appContainer');
+        const loginForm = document.getElementById('loginForm');
+        const registerForm = document.getElementById('registerForm');
+        const authError = document.getElementById('authError');
+        const authTitle = document.getElementById('authTitle');
+        const showRegister = document.getElementById('showRegister');
+        const showLogin = document.getElementById('showLogin');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const usernameEl = document.getElementById('username');
+        const totalMinutesEl = document.getElementById('totalMinutes');
+        const totalSessionsEl = document.getElementById('totalSessions');
+        const timerDisplay = document.getElementById('timerDisplay');
+        const modeIndicator = document.getElementById('modeIndicator');
+        const startBtn = document.getElementById('startBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const focusTimeInput = document.getElementById('focusTime');
+        const shortBreakInput = document.getElementById('shortBreak');
+        const longBreakInput = document.getElementById('longBreak');
+        const timerContainer = document.getElementById('timerContainer');
+        const gameContainer = document.getElementById('gameContainer');
+        const themeToggle = document.getElementById('themeToggle');
+
+        // Init
+        checkAuth();
+
+        // Auth Functions
+        function checkAuth() {
+            const token = localStorage.getItem('token');
+            const user = localStorage.getItem('user');
+            
+            if (token && user) {
+                currentUser = JSON.parse(user);
+                showApp();
+            } else {
+                showAuth();
+            }
+        }
+
+        function showAuth() {
+            authOverlay.classList.remove('hidden');
+            appContainer.classList.add('hidden');
+            // Always show login form by default
+            loginForm.style.display = 'block';
+            registerForm.style.display = 'none';
+            authTitle.textContent = 'Login to TickTask';
+            hideError();
+        }
+
+        function showApp() {
+            authOverlay.classList.add('hidden');
+            appContainer.classList.remove('hidden');
+            usernameEl.textContent = currentUser.username;
+            updateStats();
+            
+            // Initialize todo list elements
+            setTimeout(() => {
+                addTaskBtn = document.getElementById('addTaskBtn');
+                taskInputContainer = document.getElementById('taskInputContainer');
+                taskInput = document.getElementById('taskInput');
+                saveTaskBtn = document.getElementById('saveTaskBtn');
+                cancelTaskBtn = document.getElementById('cancelTaskBtn');
+                tasksList = document.getElementById('tasksList');
+                filterBtns = document.querySelectorAll('.filter-btn');
+                
+                console.log('🔍 Todo Elements Check:');
+                console.log('Add Task Button:', addTaskBtn);
+                console.log('Task Input:', taskInput);
+                console.log('Tasks List:', tasksList);
+                console.log('Filter Buttons:', filterBtns.length);
+                
+                if (addTaskBtn && tasksList) {
+                    console.log('✅ Todo list elements found!');
+                    setupTodoListeners();
+                    loadTasks();
+                } else {
+                    console.error('❌ Todo list elements NOT found!');
+                }
+            }, 100);
+        }
+
+        // Switch to register form
+        showRegister.addEventListener('click', (e) => {
+            e.preventDefault();
+            loginForm.style.display = 'none';
+            registerForm.style.display = 'block';
+            authTitle.textContent = 'Register for TickTask';
+            hideError();
+        });
+
+        // Switch to login form
+        showLogin.addEventListener('click', (e) => {
+            e.preventDefault();
+            registerForm.style.display = 'none';
+            loginForm.style.display = 'block';
+            authTitle.textContent = 'Login to TickTask';
+            hideError();
+        });
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            try {
+                const response = await fetch(`${API_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    showError(data.message);
+                    return;
+                }
+                
+                localStorage.setItem('token', data.token);
+                localStorage.setItem('user', JSON.stringify(data.user));
+                currentUser = data.user;
+                showApp();
+            } catch (error) {
+                showError('Connection error. Please try again.');
+            }
+        });
+
+        registerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('registerUsername').value;
+            const email = document.getElementById('registerEmail').value;
+            const password = document.getElementById('registerPassword').value;
+            
+            try {
+                const response = await fetch(`${API_URL}/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    showError(data.message);
+                    return;
+                }
+                
+                localStorage.setItem('token', data.token);
+                localStorage.setItem('user', JSON.stringify(data.user));
+                currentUser = data.user;
+                showApp();
+            } catch (error) {
+                showError('Connection error. Please try again.');
+            }
+        });
+
+        logoutBtn.addEventListener('click', () => {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            currentUser = null;
+            stopTimer();
+            showAuth();
+        });
+
+        function showError(message) {
+            authError.textContent = message;
+            authError.classList.remove('hidden');
+        }
+
+        function hideError() {
+            authError.classList.add('hidden');
+        }
+
+        // Timer Functions
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function updateDisplay() {
+            timerDisplay.textContent = formatTime(timeRemaining);
+        }
+
+        function startTimer() {
+            isRunning = true;
+            startBtn.classList.add('hidden');
+            pauseBtn.classList.remove('hidden');
+            
+            console.log('▶️ Timer started. Mode:', currentMode, 'Time:', timeRemaining);
+            
+            timerInterval = setInterval(() => {
+                timeRemaining--;
+                updateDisplay();
+                
+                // Save focus minute every 60 seconds during focus mode
+                if (currentMode === 'focus' && timeRemaining % 60 === 0 && timeRemaining > 0) {
+                    console.log('💾 Auto-saving 1 minute of focus...');
+                    saveFocusMinute();
+                }
+                
+                if (timeRemaining <= 0) {
+                    console.log('⏰ Timer reached 0, calling completeSession...');
+                    completeSession();
+                }
+            }, 1000);
+        }
+
+        function pauseTimer() {
+            isRunning = false;
+            clearInterval(timerInterval);
+            startBtn.classList.remove('hidden');
+            pauseBtn.classList.add('hidden');
+        }
+
+        function stopTimer() {
+            pauseTimer();
+            timeRemaining = parseInt(focusTimeInput.value) * 60;
+            updateDisplay();
+        }
+
+        async function completeSession() {
+            console.log('🎯 Session completed! Mode:', currentMode);
+            clearInterval(timerInterval);
+            isRunning = false;
+            
+            if (currentMode === 'focus') {
+                // Save focus session
+                const minutes = parseInt(focusTimeInput.value);
+                console.log('💾 Saving session:', minutes, 'minutes');
+                await saveFocusSession(minutes);
+                cycleCount++;
+                
+                // Determine break type and redirect to game page
+                const breakType = (cycleCount % 4 === 0) ? 'long' : 'short';
+                const breakDuration = breakType === 'long' ? longBreakInput.value : shortBreakInput.value;
+                
+                console.log('🎮 Break type:', breakType, 'Duration:', breakDuration);
+                
+                // Store break info in localStorage
+                localStorage.setItem('breakType', breakType);
+                localStorage.setItem('breakDuration', breakDuration);
+                
+                console.log('🔄 Redirecting to game.html...');
+                
+                // Redirect to game page
+                window.location.href = 'game.html';
+            } else {
+                // This shouldn't happen anymore since breaks are on game.html
+                // But keep as fallback
+                console.log('⚠️ Unexpected: Break ended on main page');
+                currentMode = 'focus';
+                timeRemaining = parseInt(focusTimeInput.value) * 60;
+                modeIndicator.textContent = 'Focus Time';
+                startBtn.classList.remove('hidden');
+                pauseBtn.classList.add('hidden');
+                updateDisplay();
+            }
+        }
+
+        function startBreak(type) {
+            currentMode = type === 'long' ? 'longBreak' : 'shortBreak';
+            const duration = type === 'long' ? parseInt(longBreakInput.value) : parseInt(shortBreakInput.value);
+            timeRemaining = duration * 60;
+            modeIndicator.textContent = type === 'long' ? 'Long Break' : 'Short Break';
+            
+            // Show game
+            timerContainer.classList.add('hidden');
+            gameContainer.classList.remove('hidden');
+            
+            // Auto-start break timer
+            startTimer();
+        }
+
+        async function saveFocusMinute() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_URL}/user/focus`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ minutes: 1 })
+                });
+                
+                if (!response.ok) {
+                    console.error('Failed to save focus minute');
+                    return;
+                }
+                
+                const data = await response.json();
+                currentUser.totalFocusMinutes = data.totalFocusMinutes;
+                localStorage.setItem('user', JSON.stringify(currentUser));
+                updateStats();
+                console.log('✅ Saved 1 minute. Total:', data.totalFocusMinutes);
+            } catch (error) {
+                console.error('Error saving focus minute:', error);
+            }
+        }
+
+        async function saveFocusSession(minutes) {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_URL}/user/focus`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ minutes })
+                });
+                
+                const data = await response.json();
+                currentUser.totalFocusMinutes = data.totalFocusMinutes;
+                currentUser.sessionsCompleted = data.sessionsCompleted;
+                localStorage.setItem('user', JSON.stringify(currentUser));
+                updateStats();
+            } catch (error) {
+                console.error('Error saving session:', error);
+            }
+        }
+
+        async function updateStats() {
+            totalMinutesEl.textContent = currentUser.totalFocusMinutes;
+            totalSessionsEl.textContent = currentUser.sessionsCompleted;
+        }
+
+        startBtn.addEventListener('click', startTimer);
+        pauseBtn.addEventListener('click', pauseTimer);
+        resetBtn.addEventListener('click', stopTimer);
+
+        focusTimeInput.addEventListener('change', () => {
+            if (currentMode === 'focus' && !isRunning) {
+                timeRemaining = parseInt(focusTimeInput.value) * 60;
+                updateDisplay();
+            }
+        });
+
+        // Theme Toggle
+        function loadTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'light') {
+                document.body.classList.add('light-mode');
+                themeToggle.textContent = '☀️ Light Mode';
+                authThemeToggle.textContent = '☀️ Light Mode';
+            }
+        }
+
+        function toggleTheme() {
+            document.body.classList.toggle('light-mode');
+            if (document.body.classList.contains('light-mode')) {
+                themeToggle.textContent = '☀️ Light Mode';
+                authThemeToggle.textContent = '☀️ Light Mode';
+                localStorage.setItem('theme', 'light');
+            } else {
+                themeToggle.textContent = '🌙 Dark Mode';
+                authThemeToggle.textContent = '🌙 Dark Mode';
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        themeToggle.addEventListener('click', toggleTheme);
+        authThemeToggle.addEventListener('click', toggleTheme);
+
+        // Initialize display
+        updateDisplay();
+
+        // === TODO LIST FUNCTIONS ===
+
+        function setupTodoListeners() {
+            // Show/hide task input
+            addTaskBtn.addEventListener('click', () => {
+                taskInputContainer.classList.remove('hidden');
+                taskInput.focus();
+            });
+
+            cancelTaskBtn.addEventListener('click', () => {
+                taskInputContainer.classList.add('hidden');
+                taskInput.value = '';
+            });
+
+            // Save task
+            saveTaskBtn.addEventListener('click', async () => {
+                const title = taskInput.value.trim();
+                if (!title) return;
+                
+                await createTask(title);
+                taskInput.value = '';
+                taskInputContainer.classList.add('hidden');
+            });
+
+            // Enter key to save
+            taskInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    saveTaskBtn.click();
+                }
+            });
+
+            // Filter tasks
+            filterBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    filterBtns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentFilter = btn.dataset.filter;
+                    renderTasks();
+                });
+            });
+        }
+
+        // Load tasks from API
+        async function loadTasks() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_URL}/tasks`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    console.error('Failed to load tasks');
+                    return;
+                }
+                
+                tasks = await response.json();
+                renderTasks();
+            } catch (error) {
+                console.error('Error loading tasks:', error);
+            }
+        }
+
+        // Create new task
+        async function createTask(title) {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_URL}/tasks`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ title, status: 'not-started' })
+                });
+                
+                if (!response.ok) {
+                    console.error('Failed to create task');
+                    return;
+                }
+                
+                const task = await response.json();
+                tasks.unshift(task);
+                renderTasks();
+            } catch (error) {
+                console.error('Error creating task:', error);
+            }
+        }
+
+        // Update task status
+        async function updateTaskStatus(taskId, status) {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_URL}/tasks/${taskId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ status })
+                });
+                
+                if (!response.ok) {
+                    console.error('Failed to update task');
+                    return;
+                }
+                
+                const updatedTask = await response.json();
+                const index = tasks.findIndex(t => t._id === taskId);
+                if (index !== -1) {
+                    tasks[index] = updatedTask;
+                    renderTasks();
+                }
+            } catch (error) {
+                console.error('Error updating task:', error);
+            }
+        }
+
+        // Delete task
+        async function deleteTask(taskId) {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_URL}/tasks/${taskId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    console.error('Failed to delete task');
+                    return;
+                }
+                
+                tasks = tasks.filter(t => t._id !== taskId);
+                renderTasks();
+            } catch (error) {
+                console.error('Error deleting task:', error);
+            }
+        }
+
+        // Render tasks
+        function renderTasks() {
+            const filteredTasks = currentFilter === 'all' 
+                ? tasks 
+                : tasks.filter(t => t.status === currentFilter);
+            
+            if (filteredTasks.length === 0) {
+                tasksList.innerHTML = '<div class="empty-state"><p>📋 No tasks to show.</p></div>';
+                return;
+            }
+            
+            tasksList.innerHTML = filteredTasks.map(task => `
+                <div class="task-item ${task.status}">
+                    <div class="task-status ${task.status}"></div>
+                    <div class="task-content">
+                        <div class="task-title">${escapeHtml(task.title)}</div>
+                        <select class="task-status-select" data-id="${task._id}">
+                            <option value="not-started" ${task.status === 'not-started' ? 'selected' : ''}>Not Started</option>
+                            <option value="in-progress" ${task.status === 'in-progress' ? 'selected' : ''}>In Progress</option>
+                            <option value="completed" ${task.status === 'completed' ? 'selected' : ''}>Completed</option>
+                        </select>
+                    </div>
+                    <div class="task-actions">
+                        <button class="task-delete-btn" data-id="${task._id}">🗑️</button>
+                    </div>
+                </div>
+            `).join('');
+            
+            // Add event listeners
+            document.querySelectorAll('.task-status-select').forEach(select => {
+                select.addEventListener('change', (e) => {
+                    updateTaskStatus(e.target.dataset.id, e.target.value);
+                });
+            });
+            
+            document.querySelectorAll('.task-delete-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const taskId = e.target.dataset.id;
+                    if (confirm('Delete this task?')) {
+                        deleteTask(taskId);
+                    }
+                });
+            });
+        }
+
+        // Escape HTML to prevent XSS
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>
